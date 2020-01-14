@@ -1,3 +1,8 @@
+"""
+Bill Wang
+Mar-2019
+"""
+
 import torch
 import torch.nn as nn
 import numpy as np
