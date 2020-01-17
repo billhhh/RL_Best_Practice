@@ -18,7 +18,7 @@ from tensorboardX import SummaryWriter
 
 # Parameters
 gamma = 0.99
-render = True
+render = False
 seed = 1
 log_interval = 10
 
@@ -167,11 +167,13 @@ def main():
             state = next_state
 
             if done :
-                if len(agent.buffer) >= agent.buffer_capacity: agent.update(i_epoch)
-                if len(agent.episode_len) == 0:
-                    agent.episode_len.append(len(agent.buffer))
+                if len(agent.buffer) >= agent.buffer_capacity:
+                    agent.update(i_epoch)
                 else:
-                    agent.episode_len.append(len(agent.buffer) - agent.episode_len[-1])
+                    if len(agent.episode_len) == 0:
+                        agent.episode_len.append(len(agent.buffer))
+                    else:
+                        agent.episode_len.append(len(agent.buffer) - agent.episode_len[-1])
                 agent.writer.add_scalar('liveTime/livestep', t, global_step=i_epoch)
                 break
 
