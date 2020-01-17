@@ -109,10 +109,15 @@ class PPO():
         old_action_prob = torch.tensor([t.a_log_prob for t in self.buffer], dtype=torch.float).view(-1, 1)
 
         R = 0
+        ins_pos = 0
         Gt = []
-        for r in reward[::-1]:
+        for i in range(len(reward[::-1])):
+            if i in self.episode_len:
+                R = 0
+                ins_pos = i
+            r = reward[::-1][i]
             R = r + gamma * R
-            Gt.insert(0, R)
+            Gt.insert(ins_pos, R)
         Gt = torch.tensor(Gt, dtype=torch.float)
         #print("The agent is updateing....")
         for i in range(self.ppo_update_time):
@@ -166,14 +171,9 @@ def main():
             agent.store_transition(trans)
             state = next_state
 
-            if done :
-                if len(agent.buffer) >= agent.buffer_capacity:
-                    agent.update(i_epoch)
-                else:
-                    if len(agent.episode_len) == 0:
-                        agent.episode_len.append(len(agent.buffer))
-                    else:
-                        agent.episode_len.append(len(agent.buffer) - agent.episode_len[-1])
+            if done:
+                agent.episode_len.append(len(agent.buffer))
+                if len(agent.buffer) >= agent.buffer_capacity: agent.update(i_epoch)
                 agent.writer.add_scalar('liveTime/livestep', t, global_step=i_epoch)
                 break
 
