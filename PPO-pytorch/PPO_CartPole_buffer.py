@@ -100,6 +100,7 @@ class PPO():
         self.counter += 1
 
     def update(self, i_ep):
+        global render
         state = torch.tensor([t.state for t in self.buffer], dtype=torch.float)
         action = torch.tensor([t.action for t in self.buffer], dtype=torch.long).view(-1, 1)
         reward = [t.reward for t in self.buffer]
@@ -123,7 +124,8 @@ class PPO():
         for i in range(self.ppo_update_time):
             for index in BatchSampler(SubsetRandomSampler(range(len(self.buffer))), self.batch_size, False):
                 if self.training_step % 1000 ==0:
-                    print('I_ep {} ，train {} times'.format(i_ep,self.training_step))
+                    if self.training_step == 5000: render = True
+                    print('I_ep {} ，train {} times，ave_rl {}'.format(i_ep,self.training_step, np.average(Gt)))
                 #with torch.no_grad():
                 Gt_index = Gt[index].view(-1, 1)
                 V = self.critic_net(state[index])
@@ -159,6 +161,7 @@ class PPO():
     
 def main():
     agent = PPO()
+
     for i_epoch in range(1000):
         state = env.reset()
         if render: env.render()
