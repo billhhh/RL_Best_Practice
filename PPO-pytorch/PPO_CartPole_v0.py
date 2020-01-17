@@ -29,6 +29,7 @@ torch.manual_seed(seed)
 env.seed(seed)
 Transition = namedtuple('Transition', ['state', 'action',  'a_log_prob', 'reward', 'next_state'])
 
+
 class Actor(nn.Module):
     def __init__(self):
         super(Actor, self).__init__()
@@ -97,7 +98,6 @@ class PPO():
         self.buffer.append(transition)
         self.counter += 1
 
-
     def update(self, i_ep):
         state = torch.tensor([t.state for t in self.buffer], dtype=torch.float)
         action = torch.tensor([t.action for t in self.buffer], dtype=torch.long).view(-1, 1)
@@ -105,7 +105,7 @@ class PPO():
         # update: don't need next_state
         #reward = torch.tensor([t.reward for t in self.buffer], dtype=torch.float).view(-1, 1)
         #next_state = torch.tensor([t.next_state for t in self.buffer], dtype=torch.float)
-        old_action_log_prob = torch.tensor([t.a_log_prob for t in self.buffer], dtype=torch.float).view(-1, 1)
+        old_action_prob = torch.tensor([t.a_log_prob for t in self.buffer], dtype=torch.float).view(-1, 1)
 
         R = 0
         Gt = []
@@ -126,7 +126,7 @@ class PPO():
                 # epoch iteration, PPO core!!!
                 action_prob = self.actor_net(state[index]).gather(1, action[index]) # new policy
 
-                ratio = (action_prob/old_action_log_prob[index])
+                ratio = (action_prob/old_action_prob[index])
                 surr1 = ratio * advantage
                 surr2 = torch.clamp(ratio, 1 - self.clip_param, 1 + self.clip_param) * advantage
 
@@ -165,9 +165,10 @@ def main():
             state = next_state
 
             if done :
-                if len(agent.buffer) >= agent.batch_size:agent.update(i_epoch)
+                agent.update(i_epoch)
                 agent.writer.add_scalar('liveTime/livestep', t, global_step=i_epoch)
                 break
+
 
 if __name__ == '__main__':
     main()
